@@ -8,7 +8,6 @@ import select
 import game_flow
 
 def command_selector(command, command_args, conn):
-    print(command_args)
     match command:
         case "clients":
             clr = game_flow.ClientsList(cmd="ACK")
@@ -23,18 +22,13 @@ def command_selector(command, command_args, conn):
 def listen_for_messages(conn):
     try:
         while True:
-            # Receive the header first
-            data = conn.recv(8)  # Size of the header (msg_type and msg_size)
+            data = conn.recv(8)
             if data:
-                print(data)
                 msg_type, msg_size = struct.unpack("Ii", data)
                 print(f"Message type: {msg_type}, Message size: {msg_size}")
                 
-                # Handle different message types
                 if msg_type == 0:
-                    print("case Greeting")
                     d = game_flow.Greeting.deserialize(conn.recv(msg_size))
-                    print(d)
                     d.uuid = game_flow.CLIENT_STR.encode()
                     print(d)
                     game_flow.send_message(conn, 0, d)
@@ -59,9 +53,9 @@ def handle_user_input(conn):
     while True:
         cmd = input("Enter command: ")
         if cmd:
-            args = shlex.split(cmd)  # Разбиваем команду на аргументы
-            command_name = args[0]  # Первое слово — это команда
-            command_args = args[1:]  # Остальные слова — аргументы
+            args = shlex.split(cmd)
+            command_name = args[0]
+            command_args = args[1:]
 
             command_selector(command_name, command_args, conn)  
 
@@ -72,11 +66,9 @@ def main():
     message_thread = threading.Thread(target=listen_for_messages, args=(conn,))
     input_thread = threading.Thread(target=handle_user_input, args=(conn,))
 
-    # Start the threads
     message_thread.start()
     input_thread.start()
 
-    # Wait for the threads to finish
     message_thread.join()
     input_thread.join()
 
